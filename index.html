@@ -102,7 +102,7 @@
     }
 
     function connectWS(id) {
-      ws = new WebSocket(`ws://127.0.0.1:8000/ws/${id}`);
+      ws = new WebSocket(`ws://studvpn.alwaysdata.net/ws/${id}`);
       ws.onopen = () => setConn(true, '✅ Ожидание игрока...');
       ws.onmessage = e => {
         const d = JSON.parse(e.data);
