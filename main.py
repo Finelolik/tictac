@@ -79,6 +79,20 @@ def get_state(game_id: str) -> dict:
 async def root():
     return FileResponse("index.html")
 
+@app.get("/games")
+async def list_games():
+    result = []
+    for gid, g in games.items():
+        result.append({
+            "game_id": gid,
+            "mode": g["mode"],
+            "players": len(rooms.get(gid, [])),
+            "game_over": g["game_over"],
+            "winner": g["winner"],
+            "current_player": g["current_player"]
+        })
+    return {"games": result}
+
 app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
 
 @app.post("/game/create")
