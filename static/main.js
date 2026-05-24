@@ -163,6 +163,9 @@ async function syncState() {
 
 function applyState(data) {
     if (data.error) { showMessage(data.error, 'error'); return; }
+
+    clearMessage();
+    
     state.board = data.board;
     state.currentPlayer = data.current_player;
     state.winner = data.winner;
