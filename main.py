@@ -79,7 +79,7 @@ def get_state(game_id: str) -> dict:
 async def root():
     return FileResponse("index.html")
 
-@app.get("/games")
+@app.get("/games/list")
 async def list_games():
     result = []
     for gid, g in games.items():
@@ -92,6 +92,10 @@ async def list_games():
             "current_player": g["current_player"]
         })
     return {"games": result}
+
+@app.get("/games")
+async def games_page():
+    return FileResponse("games.html")
 
 app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
 
