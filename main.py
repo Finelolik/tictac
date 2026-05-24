@@ -79,7 +79,7 @@ def get_state(game_id: str) -> dict:
 async def root():
     return FileResponse("index.html")
 
-app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
+app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
 
 @app.post("/game/create")
 async def create_game(req: GameCreate):
@@ -92,7 +92,7 @@ async def create_game(req: GameCreate):
         "message": "",
         "mode": req.mode
     }
-    # Комната создаётся ТОЛЬКО для PvP
+    # комната только для пвп
     if req.mode == "pvp":
         rooms[game_id] = []
     return {"game_id": game_id, "mode": req.mode}
@@ -119,7 +119,7 @@ async def http_move(game_id: str, req: MoveRequest):
     if g["mode"] == "pvp":
         raise HTTPException(400, "Для PvP используйте WebSocket")
 
-    # Ход игрока
+    # ход игрока
     g["board"][req.position] = "X"
     win = check_winner(g["board"])
     if win:
@@ -127,7 +127,7 @@ async def http_move(game_id: str, req: MoveRequest):
         g["winner"] = win
     else:
         g["current_player"] = "O"
-        # Ход бота (только для PvE)
+        # ход бота
         if g["mode"] == "pve":
             bp = bot_move(g["board"])
             if bp != -1:

@@ -1,18 +1,18 @@
-const API_BASE = ''; // Относительные пути для того же хоста
+const API_BASE = ''; // отн пути для хоста
 
 let state = {
     gameId: null,
-    mode: null,      // 'pvp' | 'pve'
+    mode: null,      // pvp or pve
     board: Array(9).fill(null),
     currentPlayer: 'X',
     winner: null,
     gameOver: false,
-    playerIdx: null, // для PvP: 1 или 2
+    playerIdx: null, // индекс юзера
     ws: null,
-    mySymbol: null,  // для PvP: 'X' или 'O'
+    mySymbol: null,  // знак для юзера
 };
 
-/* ---------- UI helpers ---------- */
+/* служебное */
 function $(id) { return document.getElementById(id); }
 function showScreen(name) {
     ['menu', 'lobby', 'game'].forEach(s => $(s).classList.add('hidden'));
@@ -28,7 +28,7 @@ function showMessage(text, type = 'info') {
 }
 function clearMessage() { showMessage('', 'info'); $('message').classList.add('hidden'); }
 
-/* ---------- Board ---------- */
+/* доска */
 function renderBoard() {
     const cells = document.querySelectorAll('.cell');
     const wins = state.winner && state.winner !== 'draw'
@@ -89,7 +89,7 @@ function updateStatus() {
     }
 }
 
-/* ---------- API ---------- */
+/* работа с апи */
 async function apiPost(path, body) {
     const res = await fetch(API_BASE + path, {
         method: 'POST',
@@ -108,7 +108,7 @@ async function apiGet(path) {
     return data;
 }
 
-/* ---------- Game flow ---------- */
+/* создание игры */
 async function createGame(mode) {
     clearState();
     try {
@@ -169,10 +169,9 @@ function applyState(data) {
     state.gameOver = data.game_over;
     state.mode = data.mode;
     renderBoard();
-    if (data.message) showMessage(data.message, data.winner === 'draw' ? 'draw' : 'win');
 }
 
-/* ---------- WebSocket (PvP) ---------- */
+/* вебсокет для пвп */
 function initWs() {
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${proto}//${window.location.host}/ws/${state.gameId}`;
@@ -189,12 +188,9 @@ function initWs() {
 
         if (msg.type === 'joined') {
             state.playerIdx = msg.player;
-            // Игрок 1 = X, игрок 2 = O
             state.mySymbol = msg.player === 1 ? 'X' : msg.player === 2 ? 'O' : null;
             if (msg.state) applyState(msg.state);
-            // Если комната заполнена (2 игрока), переключаемся на игру
             if (msg.player <= 2) {
-                // остаемся в лобби пока не придет update с 2 игроками
             }
         }
         else if (msg.type === 'update') {
@@ -230,7 +226,7 @@ function initWs() {
     };
 }
 
-/* ---------- Moves ---------- */
+/* ходы */
 document.getElementById('board').addEventListener('click', (e) => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
@@ -243,7 +239,7 @@ async function makeMove(idx) {
     if (!state.gameId || state.gameOver) return;
     if (state.board[idx] !== null) return;
 
-    // PvE: ходим только за X
+    // в пве только за Х
     if (state.mode === 'pve') {
         if (state.currentPlayer !== 'X') return;
         try {
@@ -255,7 +251,7 @@ async function makeMove(idx) {
         return;
     }
 
-    // PvP: ходим только свой символ
+    // в пвп за свой символ
     if (state.mode === 'pvp') {
         if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
             showMessage('Нет подключения', 'error'); return;
@@ -267,7 +263,7 @@ async function makeMove(idx) {
     }
 }
 
-/* ---------- Reset / Leave ---------- */
+/* рестарт или лив */
 async function resetGame() {
     if (!state.gameId) return;
     if (state.mode === 'pve') {
@@ -295,5 +291,4 @@ function goBack() {
     leaveGame();
 }
 
-/* ---------- Init ---------- */
 renderBoard();
