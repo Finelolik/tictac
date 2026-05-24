@@ -2,17 +2,47 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+
+from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Literal
 
+from datetime import datetime, timedelta, timezone
 import os
-
 import uuid
 import random
+import asyncio
 
 FRONTEND_DIR = os.path.join(os.path.dirname(__file__))
 
-app = FastAPI(title="Крестики-нолики Online")
+async def cleanup_old_games():
+    while True:
+        await asyncio.sleep(60)
+        now = datetime.now(timezone.utc)
+        to_remove = []
+        for gid, created in list(game_created.items()):
+            g = games.get(gid)
+            if not g:
+                to_remove.append(gid)
+                continue
+            players = len(rooms.get(gid, []))
+            age = now - created
+            if g["game_over"] and age > timedelta(minutes=10):
+                to_remove.append(gid)
+            elif players == 0 and age > timedelta(minutes=5):
+                to_remove.append(gid)
+        for gid in to_remove:
+            games.pop(gid, None)
+            rooms.pop(gid, None)
+            game_created.pop(gid, None)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(cleanup_old_games())
+    yield
+    task.cancel()
+
+app = FastAPI(title="Крестики-нолики", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -24,7 +54,7 @@ app.add_middleware(
 
 games: Dict[str, dict] = {}
 rooms: Dict[str, List[WebSocket]] = {}
-
+game_created: Dict[str, datetime] = {}
 class GameCreate(BaseModel):
     mode: Literal["pvp", "pve"] = "pve"
 
@@ -102,6 +132,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static"))
 @app.post("/game/create")
 async def create_game(req: GameCreate):
     game_id = str(uuid.uuid4())[:8].upper()
+    game_created[game_id] = datetime.now(timezone.utc)
     games[game_id] = {
         "board": [None]*9,
         "current_player": "X",
