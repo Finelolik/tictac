@@ -1,10 +1,16 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Literal
+
+import os
+
 import uuid
 import random
+
+FRONTEND_DIR = os.path.join(os.path.dirname(__file__))
 
 app = FastAPI(title="Крестики-нолики Online")
 
@@ -72,6 +78,8 @@ def get_state(game_id: str) -> dict:
 @app.get("/")
 async def root():
     return FileResponse("index.html")
+
+app.mount("/js", StaticFiles(directory=os.path.join(FRONTEND_DIR, "js")), name="js")
 
 @app.post("/game/create")
 async def create_game(req: GameCreate):

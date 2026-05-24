@@ -1,177 +1,349 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Крестики-нолики</title>
-  <style>
-    :root { --bg: #1a1a1a; --panel: #2a2a2a; --text: #e0e0e0; --accent: #4a90e2; --x: #5050c8; --o: #c83232; --line: #555; }
-    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
-    h1 { margin-bottom: 20px; }
-    .section { background: var(--panel); padding: 20px; border-radius: 12px; margin-bottom: 15px; }
-    .btn { padding: 12px 20px; margin: 5px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
-    .btn:hover { opacity: 0.9; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-sec { background: var(--line); }
-    input { padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); text-align: center; width: 120px; margin: 5px; }
-    #status { margin: 10px 0; font-weight: bold; min-height: 24px; }
-    #board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--line); padding: 4px; border-radius: 8px; margin: 15px auto; max-width: 300px; aspect-ratio: 1; }
-    .cell { background: var(--panel); border: none; font-size: 48px; cursor: pointer; color: var(--text); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-    .cell:hover:not(:disabled) { background: #333; }
-    .cell.x { color: var(--x); }
-    .cell.o { color: var(--o); }
-    .cell:disabled { cursor: default; }
-    .hidden { display: none !important; }
-    .room-id { font-family: monospace; font-size: 24px; background: var(--bg); padding: 10px; border-radius: 8px; margin: 10px 0; letter-spacing: 2px; }
-    .conn-status { font-size: 12px; margin-bottom: 10px; color: #888; }
-    .conn-status.ok { color: #4f4; }
-    .conn-status.err { color: #f44; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Крестики-нолики Online</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent-x: #f43f5e;
+            --accent-o: #3b82f6;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 0.95rem;
+        }
+        .menu, .game-screen {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+        .btn-danger {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-x);
+            border: 1px solid rgba(244, 63, 94, 0.3);
+        }
+        .btn-danger:hover {
+            background: rgba(244, 63, 94, 0.25);
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        .input {
+            flex: 1;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.2s;
+            text-transform: uppercase;
+        }
+        .input:focus {
+            border-color: var(--primary);
+        }
+        .input::placeholder {
+            color: var(--text-muted);
+            text-transform: none;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin: 8px 0;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-pvp { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+        .badge-pve { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .badge-waiting { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .badge-active { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+        .badge-ended { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 8px 0;
+        }
+        .cell {
+            aspect-ratio: 1;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .cell:hover:not(.taken) {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+        .cell.taken {
+            cursor: default;
+        }
+        .cell.x { color: var(--accent-x); }
+        .cell.o { color: var(--accent-o); }
+        .cell.winner {
+            animation: pulse 1s infinite;
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.1);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .turn-indicator {
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .turn-x { color: var(--accent-x); }
+        .turn-o { color: var(--accent-o); }
+        .message {
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-win { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+        .msg-draw { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .msg-error { background: rgba(244, 63, 94, 0.15); color: var(--accent-x); }
+        .msg-info { background: rgba(99, 102, 241, 0.15); color: var(--primary); }
+        .room-code {
+            text-align: center;
+            padding: 20px;
+            background: var(--surface);
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+        }
+        .room-code-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .room-code-value {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: var(--primary);
+            font-family: monospace;
+        }
+        .hidden { display: none !important; }
+        .players-count {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .back-btn:hover { background: var(--surface-hover); }
+        .wrapper { position: relative; width: 100%; max-width: 480px; }
+        @media (max-width: 520px) {
+            .container { padding: 16px; }
+            h1 { font-size: 1.5rem; }
+            .cell { font-size: 2rem; border-radius: 12px; }
+        }
+    </style>
+<base target="_blank">
 </head>
 <body>
-  <div class="container">
-    <h1>🎮 Крестики-нолики</h1>
-    <div id="conn" class="conn-status">🔌 Отключено</div>
+    <div class="wrapper">
+        <button class="back-btn hidden" id="backBtn" onclick="goBack()">← Назад</button>
+        <div class="container">
+            <h1>⭕ Крестики-нолики</h1>
+            <p class="subtitle">Играй с друзьями или с ботом</p>
 
-    <div id="menu" class="section">
-      <button class="btn" onclick="start('pvp')">👥 Игрок vs Игрок</button>
-      <button class="btn" onclick="start('pve')">🤖 Игрок vs Робот</button>
-      <div style="margin-top:15px; border-top:1px solid var(--line); padding-top:15px;">
-        <input type="text" id="rid" placeholder="ID комнаты" maxlength="8">
-        <button class="btn btn-sec" onclick="join()">Войти</button>
-      </div>
+            <!-- Меню -->
+            <div id="menu" class="menu">
+                <button class="btn btn-primary" onclick="createGame('pve')">
+                    🤖 Играть с ботом
+                </button>
+                <div class="divider">или</div>
+                <button class="btn btn-primary" onclick="createGame('pvp')">
+                    👥 Создать комнату
+                </button>
+                <div class="divider">присоединиться</div>
+                <div class="input-group">
+                    <input type="text" id="joinCode" class="input" placeholder="Код комнаты" maxlength="8">
+                    <button class="btn btn-secondary" onclick="joinGame()" style="width:auto; padding: 14px 20px;">
+                        Войти
+                    </button>
+                </div>
+            </div>
+
+            <!-- Экран ожидания PvP -->
+            <div id="lobby" class="game-screen hidden">
+                <div class="room-code">
+                    <div class="room-code-label">Код комнаты</div>
+                    <div class="room-code-value" id="lobbyCode">--------</div>
+                </div>
+                <div class="players-count" id="lobbyStatus">
+                    <span class="spinner"></span> Ожидание второго игрока...
+                </div>
+                <button class="btn btn-danger" onclick="leaveGame()">Покинуть комнату</button>
+            </div>
+
+            <!-- Игровой экран -->
+            <div id="game" class="game-screen hidden">
+                <div class="status-bar">
+                    <span id="gameMode">Режим</span>
+                    <span class="status-badge" id="gameStatus">Активно</span>
+                </div>
+                <div class="turn-indicator" id="turnIndicator">Ходит X</div>
+                <div id="message" class="message hidden"></div>
+                <div class="board" id="board">
+                    <div class="cell" data-index="0"></div>
+                    <div class="cell" data-index="1"></div>
+                    <div class="cell" data-index="2"></div>
+                    <div class="cell" data-index="3"></div>
+                    <div class="cell" data-index="4"></div>
+                    <div class="cell" data-index="5"></div>
+                    <div class="cell" data-index="6"></div>
+                    <div class="cell" data-index="7"></div>
+                    <div class="cell" data-index="8"></div>
+                </div>
+                <div class="players-count" id="playersInfo"></div>
+                <button class="btn btn-secondary" onclick="resetGame()">🔄 Новая игра</button>
+                <button class="btn btn-danger" onclick="leaveGame()">🏠 Выйти в меню</button>
+            </div>
+        </div>
     </div>
 
-    <div id="wait" class="section hidden">
-      <h2>Ожидание соперника</h2>
-      <p>Отправьте код другу:</p>
-      <div class="room-id" id="display-id">----</div>
-      <button class="btn btn-sec" onclick="copyId()">📋 Копировать</button>
-      <button class="btn btn-sec" onclick="toMenu()">Отмена</button>
-    </div>
-
-    <div id="game" class="section hidden">
-      <div id="status">Ход: X</div>
-      <div id="board"></div>
-      <button class="btn" id="reset-btn" onclick="doReset()" disabled>🔄 Рестарт</button>
-      <button class="btn btn-sec" onclick="toMenu()">В меню</button>
-    </div>
-  </div>
-
-  <script>
-    const API = "https://studvpn.alwaysdata.net";
-    let ws = null, gid = null, mode = null, myPlayer = null;
-
-    const $ = id => document.getElementById(id);
-    const show = id => $(id).classList.remove('hidden');
-    const hide = id => $(id).classList.add('hidden');
-    const setConn = (ok, msg) => { $('conn').className = 'conn-status ' + (ok ? 'ok' : 'err'); $('conn').textContent = msg || (ok ? '✅ Подключено' : '🔌 Отключено'); };
-
-    function start(m) {
-      mode = m;
-      fetch(`${API}/game/create`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mode: m}) })
-        .then(r => r.json()).then(d => {
-          gid = d.game_id.toUpperCase();
-          if (m === 'pve') {
-            // Для PvE сразу показываем игру, ID не выводим
-            show('game'); hide('menu');
-            renderBoard(d);
-            setConn(true, '🤖 PvE режим');
-          } else {
-            // Для PvP показываем комнату ожидания
-            show('wait'); hide('menu');
-            $('display-id').textContent = gid;
-            connectWS(gid);
-          }
-        });
-    }
-
-    function join() {
-      const id = $('rid').value.trim().toUpperCase();
-      if (!id) return alert('Введите ID');
-      fetch(`${API}/game/${id}`).then(r => {
-        if (!r.ok) throw new Error('Игра не найдена');
-        return r.json();
-      }).then(d => {
-        if (d.mode !== 'pvp') return alert('Эта игра не для PvP');
-        gid = id; mode = 'pvp';
-        connectWS(gid);
-        hide('menu');
-      }).catch(e => alert(e.message));
-    }
-
-    function connectWS(id) {
-      ws = new WebSocket(`ws://studvpn.alwaysdata.net/ws/${id}`);
-      ws.onopen = () => setConn(true, '✅ Ожидание игрока...');
-      ws.onmessage = e => {
-        const d = JSON.parse(e.data);
-        if (d.error) { alert(d.error); toMenu(); return; }
-        if (d.type === 'joined') {
-          myPlayer = d.player;
-          if (d.state.players >= 2) {
-            hide('wait'); show('game');
-            setConn(true, `👥 Вы игрок ${myPlayer} (${myPlayer===1?'X':'O'})`);
-          } else {
-            $('conn').textContent = `👤 Вы игрок ${myPlayer}. Ждем второго...`;
-          }
-        }
-        if (d.type === 'update') {
-          if (d.players >= 2) { hide('wait'); show('game'); setConn(true, `👥 Игроков: ${d.players}`); }
-          renderBoard(d.state);
-        }
-      };
-      ws.onclose = () => { setConn(false, ' Отключено'); $('reset-btn').disabled = true; };
-    }
-
-    function renderBoard(s) {
-      $('status').textContent = s.game_over ? s.message : `Ход: ${s.current_player}`;
-      $('reset-btn').disabled = !s.game_over;
-      const b = $('board'); b.innerHTML = '';
-      s.board.forEach((v, i) => {
-        const c = document.createElement('button');
-        c.className = `cell ${v ? v.toLowerCase() : ''}`;
-        c.textContent = v || '';
-        // Определяем чей ход
-        const isMyTurn = mode === 'pve' ? s.current_player === 'X' : (s.current_player === (myPlayer===1?'X':'O'));
-        c.disabled = v || s.game_over || !isMyTurn || (mode==='pvp' && (!ws || ws.readyState!==1));
-        if (!c.disabled) c.onclick = () => makeMove(i);
-        b.appendChild(c);
-      });
-    }
-
-    function makeMove(pos) {
-      if (mode === 'pve') {
-        fetch(`${API}/game/${gid}/move`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({position: pos}) })
-          .then(r => r.json()).then(renderBoard);
-      } else if (ws && ws.readyState === 1) {
-        ws.send(JSON.stringify({type: 'move', position: pos}));
-      }
-    }
-
-    function doReset() {
-      if (mode === 'pve') {
-        fetch(`${API}/game/${gid}/reset`, {method: 'POST'}).then(r => r.json()).then(renderBoard);
-      } else if (ws && ws.readyState === 1) {
-        ws.send(JSON.stringify({type: 'reset'}));
-      }
-    }
-
-    function copyId() {
-      navigator.clipboard.writeText(gid).then(() => {
-        const b = document.querySelector('#wait button');
-        const t = b.textContent; b.textContent = '✅ Скопировано!';
-        setTimeout(() => b.textContent = t, 1500);
-      });
-    }
-
-    function toMenu() {
-      if (ws) ws.close();
-      ws = null; gid = null; mode = null; myPlayer = null;
-      hide('wait'); hide('game'); show('menu');
-      setConn(false, '🔌 Отключено');
-      $('rid').value = '';
-    }
-  </script>
+    <script src="/js/main.js"></script>
 </body>
 </html>
