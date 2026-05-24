@@ -166,7 +166,7 @@
     <script>
         async function loadGames() {
             try {
-                const res = await fetch('/games');
+                const res = await fetch('/games/list');
                 const data = await res.json();
                 render(data.games || []);
             } catch (e) {
